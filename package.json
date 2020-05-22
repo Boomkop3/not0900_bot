@@ -1,0 +1,14 @@
+{
+  "name": "discord-proxy",
+  "version": "1.0.0",
+  "description": "Discord PHP proxy",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Julian & Sjors",
+  "license": "MIT",
+  "dependencies": {
+    "discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6"
+  }
+}
