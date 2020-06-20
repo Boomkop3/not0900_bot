@@ -13,60 +13,70 @@ function main(){
 	console.log('bot running, waiting for start signal');
 }
 
-function start(message, channelID){
-	var message = message.substr(startCommand.length);
-	
-	const options = {
+function getNetworkOptions(url){
+	return {
 		hostname: auth.hostname,
 		port: auth.port,
-		path: '/?id=' + auth.id + '&action=start&file=' + message + '&channel=' + channelID,
+		path: url,
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 			'Content-Length': 0
 		}
-	}
-	
+	};
+}
+
+function getNetworkRequest(options, callback){
 	let response = [];
-		
-	// Request received
-	const request = https.request(options, res => {
+	https.request(options, res => {
 		res.on('data', chunk => {
 			response += chunk;
 		});
 		res.on('end', result => {
-			let apiResponse = JSON.parse(response);
-			if (apiResponse.shift()){
-				bot.sendMessage({
-					to: channelID,
-					message: "Sure, let's go..."
-				});
-				let id = setInterval(()=>{
-					// shifts array by one
-					handleConversation(apiResponse, channelID);
-					if (apiResponse.length == 0){
-						clearInterval(id);
-					}
-				}, 1150);
-			} else {
-				bot.sendMessage({
-					to: channelID,
-					message: "If only I had a clone with worse taste than me"
-				});
-			}
+			callback(response);
 		});
-	});
-	
-	// Error
-	request.on('error', error => {
-		console.log(error);
-	});
-
-	// request.write(payload);
-	request.end();
+	}).end();
 }
 
-function handleConversation(response, channelID){
+function start(message, channelID){
+	var message = message.substr(startCommand.length);
+	var url = '/?id=' + auth.id + '&action=start&file=' + message + '&channel=' + channelID;
+	var options = getNetworkOptions(url);
+	
+	getNetworkRequest(options, (response) => {
+		let apiResponse = JSON.parse(response);
+		if (apiResponse.shift()){
+			bot.sendMessage({
+				to: channelID,
+				message: "Sure, let's go..."
+			});
+			let id = setInterval(()=>{
+				// shifts array by one
+				handleConversation(apiResponse, channelID, (apiResponse, channelID)=>{
+					if (apiResponse.length == 0){
+						clearInterval(id);
+						requestNextStep(channelID);
+					}
+				});
+			}, 1100);
+		} else {
+			bot.sendMessage({
+				to: channelID,
+				message: "If only I had a clone with worse taste than me"
+			});
+		}
+	});
+}
+
+function requestNextStep(channelID){
+	var url = '/?id=' + auth.id + '&action=next' + '&channel=' + channelID;
+	var options = getNetworkOptions(url);
+	getNetworkRequest(options, (response) => {
+		console.log(response);
+	});
+}
+
+function handleConversation(response, channelID, callback){
 	// console.log(response);
 	if (response.shift() == 'text'){
 		let lines = response.shift();
@@ -77,6 +87,7 @@ function handleConversation(response, channelID){
 			});
 			if (lines.length == 0){
 				clearInterval(id);
+				callback(response, channelID);
 			}
 		}, 1150);
 	} else { // It's a menu
