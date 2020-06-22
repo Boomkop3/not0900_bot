@@ -1,9 +1,12 @@
 const Discord = require('discord.io');
 const https = require('https');
 const auth = require('./auth.json');
+const Set = require("collections/set");
 const startCommand = '!date ';
+const stopCommand = '!stop';
 var spam = [];
 var emotes = ['❤', '💛', '💙', '💯', '💢', '💥', '💫', '💦'];
+var running = new Set();
 
 // Initialize Discord Bot
 const bot = new Discord.Client({
@@ -15,7 +18,12 @@ bot.on('ready', () => {
 	let speed = 100;
 	let counter = 0;
 	let max = 5000;
+	let qlength = 0;
 	setInterval(()=>{
+		if (qlength != spam.length){
+			qlength = spam.length;
+			console.log('output queue: ' + qlength);
+		}
 		if (counter > 2000){
 			if (spam.length > 0){
 				let message = spam.shift();
@@ -47,20 +55,39 @@ function getNetworkOptions(url){
 	};
 }
 
-function getNetworkRequest(options, callback){
+function getNetworkRequest(options, callback, channelID){
+	// console.log(channelID);
+	// console.log(running);
+	if (!running.has(channelID)){
+		return;
+	}
 	let response = [];
 	console.log(options.path);
-	https.request(options, res => {
+	let request = https.request(options, res => {
 		res.on('data', chunk => {
 			response += chunk;
 		});
 		res.on('end', result => {
 			callback(response);
 		});
-	}).end();
+	});
+	request.on('error', (error) => {
+		console.log(error);
+	});
+	request.end();
 }
 
 function start(message, channelID){
+	if (!running.has(channelID)){
+		running.add(channelID);	
+	} else {
+		spam.push(function (){
+			bot.sendMessage({
+				to: channelID, 
+				message: "Ehm, I'm kinda busy senpai"
+			});
+		});
+	}
 	var message = message.substr(startCommand.length);
 	var url = '/?id=' + auth.id + '&action=start&file=' + message + '&channel=' + channelID;
 	var options = getNetworkOptions(url);
@@ -69,10 +96,12 @@ function start(message, channelID){
 		let apiResponse = JSON.parse(response);
 		// console.log(apiResponse);
 		if (apiResponse.shift()){
-			spam.push([
-				channelID, 
-				"Sure, let's go..."
-			]);
+			spam.push(function (){
+				bot.sendMessage({
+					to: channelID, 
+					message: "Sure, let's go..."
+				});
+			});
 			let id = setInterval(()=>{
 				// shifts array by one
 				handleConversation(apiResponse, channelID, (apiResponse, channelID)=>{
@@ -90,7 +119,7 @@ function start(message, channelID){
 				})
 			});
 		}
-	});
+	}, channelID);
 }
 
 function requestNextStep(channelID){
@@ -104,7 +133,7 @@ function requestNextStep(channelID){
 				console.log('conversation handled');
 			});
 		}
-	});
+	}, channelID);
 }
 
 function handleConversation(response, channelID, callback){
@@ -180,13 +209,32 @@ function handleConversation(response, channelID, callback){
 									requestNextStep(channelID);
 								});
 							}
-						});
+						}, channelID);
 					});
 				}, 20000);
 			})
 		});
 		callback([], channelID);
 	}
+}
+
+function stop(channelID){
+	let url = '/?id=' + auth.id + '&action=stop' + '&channel=' + channelID;
+	let options = getNetworkOptions(url);
+	getNetworkRequest(
+		options, function() {
+			spam.unshift(function () {
+				bot.sendMessage({
+					to: channelID, 
+					message: "Okay, I'll go..."
+				}, (err, res) => {
+					console.log('leaving');
+					running.delete(channelID);
+					console.log(running);
+				});
+			});
+		}, channelID
+	);
 }
 
 bot.on('message', function (user, userID, channelID, message, evt) {
@@ -203,6 +251,9 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 		if (message.startsWith(startCommand)){
 			console.log('recieved start signal');
 			start(message, channelID);
+		} else if (message.startsWith(stopCommand)){
+			console.log('recieved stop signal');
+			stop(channelID);
 		}
     } catch (e) {
         console.log(e);

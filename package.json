@@ -9,6 +9,7 @@
   "author": "Julian & Sjors",
   "license": "MIT",
   "dependencies": {
+    "collections": "^5.1.11",
     "discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6"
   }
 }
