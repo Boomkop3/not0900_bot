@@ -34,9 +34,25 @@ function main(){
   }
 }
 
+function preProcess($story){
+  $lcount = count($story['story']);
+  for ($i = 0; $i < $lcount; $i++){
+    $post = $story['story'][$i]['post'];
+    $keys = array_keys($story['story'][$i]['menu']);
+    foreach ($keys as $key){
+      foreach ($post as $line){
+        array_push($story['story'][$i]['menu'][$key], $line);
+      }
+    }
+  }
+  return $story;
+}
+
 function firstLevel($json){
   $state = new stdClass();
-  $story = json_decode($json);
+  $story = json_decode($json, true);
+  $story = preProcess($story);
+  $story = json_decode(json_encode($story));
   $scene = (Object)Array();
   
   $state->story = $story;

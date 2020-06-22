@@ -13,8 +13,7 @@
           "var: dinner = steak",
           "say: you: You tell the waiter that you want to eat medium-rare steak.",
           "say: date: I've been trying to watch my diet recently, but steak sounds wonderful!",
-          "say: waiter: Very well, your steak will be out shortly!", 
-          "jump: questionLoop"
+          "say: waiter: Very well, your steak will be out shortly!"
         ],
         "Fish": [
           "var: dinner = Fish",
