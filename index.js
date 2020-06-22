@@ -19,24 +19,38 @@ bot.on('ready', () => {
 	let counter = 0;
 	let max = 5000;
 	let qlength = 0;
+	let cooldown = 0;
 	setInterval(()=>{
 		if (qlength != spam.length){
 			qlength = spam.length;
 			console.log('output queue: ' + qlength);
 		}
-		if (counter > 2000){
+		if (cooldown > 0){
+			cooldown -= 1;
+			return;
+		}
+		if (counter > 1000){
 			if (spam.length > 0){
 				let message = spam.shift();
 				if (typeof message === 'function'){
 					message.call();
 				}
-				counter -= 2000;
+				counter -= 1000;
+				cooldown = 2000/speed;
 			}
 		}
 		counter += speed;
 		if (counter > max) counter = max;
 	}, speed)
 });
+
+function flushOutput(){
+	let waiter = setInterval(() => {
+		if (spam.length == 0){
+			clearInterval(waiter);
+		}
+	}, 50);
+}
 
 function main(){
 	console.log('bot running, waiting for start signal');
@@ -96,12 +110,14 @@ function start(message, channelID){
 		let apiResponse = JSON.parse(response);
 		// console.log(apiResponse);
 		if (apiResponse.shift()){
+			/*
 			spam.push(function (){
 				bot.sendMessage({
 					to: channelID, 
 					message: "Sure, let's go..."
 				});
 			});
+			*/
 			let id = setInterval(()=>{
 				// shifts array by one
 				handleConversation(apiResponse, channelID, (apiResponse, channelID)=>{
@@ -155,34 +171,28 @@ function handleConversation(response, channelID, callback){
 		console.log('got me a menu');
 		let options = response.shift();
 		let size = options.length;
-		let message = '';
+		let message = '...\r\n';
 		for (let i = 0; i < size; i++){
-			message += '<' + i + '] ' + options[i];
+			message += emotes[i] + ' ' + options[i];
 			message += '\r\n';
 		}
 		spam.push(function(){
 			bot.sendMessage({
 				to: channelID,
 				message: message
-			}, (err, res)=>{
+			}, async (err, res)=>{
 				console.log(err);
+				await flushOutput();
 				for (let i = 0; i < size; i++){
 					spam.push(function(){
 						bot.addReaction({
 							channelID: channelID, 
 							messageID: res.id, 
 							reaction: emotes[i]
-						}, (err, res)=>{
-							// console.log(err);
-							// console.log(res);
 						});
 					});
 				}
-				let waiter = setInterval(() => {
-					if (spam.length == 0){
-						clearInterval(waiter);
-					}
-				}, 50);
+				await flushOutput();
 				setTimeout(function() {
 					bot.getMessage({
 						channelID: channelID, 
