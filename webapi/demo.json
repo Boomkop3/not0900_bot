@@ -1,0 +1,67 @@
+{
+  "startingpoint": "restaurant",
+  "date": "Linus torvalds",
+  "story": [
+    {
+      "label": "restaurant",
+      "pre": [
+        "say: waiter: Bonjour, monsieur. What will you two be ordering here tonight?",
+        "say: date: What shall we eat? I'm famished."
+      ],
+      "menu": {
+        "steak": [
+          "var: dinner = steak",
+          "say: you: You tell the waiter that you want to eat medium-rare steak.",
+          "say: date: I've been trying to watch my diet recently, but steak sounds wonderful!",
+          "say: waiter: Very well, your steak will be out shortly!", 
+          "jump: questionLoop"
+        ],
+        "Fish": [
+          "var: dinner = Fish",
+          "say: you: You tell Richard that actually, you're in the mood for grilled swordfish.",
+          "say: date: I've been trying to watch my diet recently, but Fish sounds wonderful!",
+          "say: waiter: Very well, your Fish will be out shortly!"
+        ],
+        "Salad": [
+          "var: dinner = Salad",
+          "say: you: You loudly insist that the both of you must eat Kale Salad.",
+          "say: date: I've been trying to watch my diet recently, but Salad sounds wonderful!",
+          "say: waiter: Very well, your Salad will be out shortly!"
+        ]
+      },
+      "post": [
+        "jump: questionLoop"
+      ]
+    },
+    {
+      "label": "questionLoop",
+      "pre": [
+        "say: date: What shall we talk about?"
+      ],
+      "menu": {
+        "History of Free Software": [
+          "say: date: I founded GNU in 1983 as a means to protect the development of Free Software.",
+          "say: date: GNU is a recursive acronym, which stands for GNU is Not Unix."
+        ],
+        "Open Source": [
+          "say: date: People have the right to privacy.",
+          "say: date: The problem with proprietary software is that those systems inherently prevent you from looking inside of them.",
+          "say: date: ..."
+        ],
+        "Privacy": [
+          "say: date: GNU is my child project, and I am very proud of what it has become.",
+          "say: date: It is a completely free operating system."
+        ],
+        "GNU": [
+          "say: date: Don't get me started."
+        ], 
+        "Dating": [
+          "say: date: Lets talk about the free software dating scene. As a twenty year old single male I think it's very hard to find a girl who's actually interested in free software. I've had girls jokingly ask to \"Netflix and chill\" but when I tell her that I don't use Netflix since Netflix requires proprietary software to stream content, they stop talking to me. And worse if they do stay they think I'm weird since I blocked google IP's in my host file and we can't even watch youtube. I can't ever seem to get girls to come over to my place and I can't text them either. Once I get their numbers since I've added custom roms to my phone and refuse to use sms since it's a security concern. I require all of my friends to download a free and open source messaging app and I share with them my pgp key so that we can verify that our conversations are secure. None of my friends are willing to do this. And I can't use sites like tinder since it's not only proprietary software but a major privacy vulnerability. How come it is so hard to find a girl concerned about software freedom? I feel like I'm going to be a virgin forever."
+        ]
+      },
+      "post": [
+        "jump: questionLoop"
+      ]
+    }
+  ]
+}
