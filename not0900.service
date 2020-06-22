@@ -1,0 +1,15 @@
+[Unit]
+Description=starts a bot
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+after=screen.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/not0900
+ExecStart=/home/pi/not0900/run.sh
+TimeoutSec=30
+
+[Install]
+WantedBy=multi-user.target

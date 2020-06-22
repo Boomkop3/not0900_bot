@@ -1,0 +1,13 @@
+echo not0900 install script
+echo dont expect this to go well
+echo installing dependencies
+npm install --save
+echo copying required files...
+cp not0900.service /etc/systemd/system/not0900.service
+echo reloading services...
+systemctl daemon-reload
+echo enabling service...
+systemctl enable not0900
+echo starting service...
+systemctl start not0900
+echo installation complete
