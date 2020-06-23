@@ -29,13 +29,13 @@ bot.on('ready', () => {
 			cooldown -= 1;
 			return;
 		}
-		if (counter > 1000){
+		if (counter > 2000){
 			if (spam.length > 0){
 				let message = spam.shift();
 				if (typeof message === 'function'){
 					message.call();
 				}
-				counter -= 1000;
+				counter -= 2000;
 				cooldown = 2000/speed;
 			}
 		}
@@ -44,10 +44,11 @@ bot.on('ready', () => {
 	}, speed)
 });
 
-function flushOutput(){
+function flushOutput(callback){
 	let waiter = setInterval(() => {
 		if (spam.length == 0){
 			clearInterval(waiter);
+			callback();
 		}
 	}, 50);
 }
@@ -182,47 +183,50 @@ function handleConversation(response, channelID, callback){
 				message: message
 			}, async (err, res)=>{
 				console.log(err);
-				await flushOutput();
-				for (let i = 0; i < size; i++){
-					spam.push(function(){
-						bot.addReaction({
-							channelID: channelID, 
-							messageID: res.id, 
-							reaction: emotes[i]
+				flushOutput(()=>{
+					for (let i = 0; i < size; i++){
+						spam.push(function(){
+							bot.addReaction({
+								channelID: channelID, 
+								messageID: res.id, 
+								reaction: emotes[i]
+							});
 						});
+					}
+					flushOutput(()=>{
+						console.log('waiting 10 seconds...');
+						setTimeout(function() {
+							bot.getMessage({
+								channelID: channelID, 
+								messageID: res.id
+							}, (err, res)=>{
+								let reactions = res.reactions;
+								// console.log(reactions);
+								let length = reactions.length;
+								// console.log(length);
+								let biggest = reactions[0];
+								let biggestindex = 0;
+								for (let i = 0; i < length; i++){
+									if (biggest.count < reactions[i].count){
+										biggest = reactions[i];
+										biggestindex = i;
+									}
+								}
+								var url = '/?id=' + auth.id + '&action=menu&menu=' + biggestindex + '&channel=' + channelID;
+								let options = getNetworkOptions(url);
+								getNetworkRequest(options, (response)=>{
+									let menuResponse = JSON.parse(response);
+									if (menuResponse.shift()){
+										handleConversation(menuResponse, channelID, () => {
+											requestNextStep(channelID);
+										});
+									}
+								}, channelID);
+							});
+						}, 10000);
 					});
-				}
-				await flushOutput();
-				setTimeout(function() {
-					bot.getMessage({
-						channelID: channelID, 
-						messageID: res.id
-					}, (err, res)=>{
-						let reactions = res.reactions;
-						// console.log(reactions);
-						let length = reactions.length;
-						// console.log(length);
-						let biggest = reactions[0];
-						let biggestindex = 0;
-						for (let i = 0; i < length; i++){
-							if (biggest.count < reactions[i].count){
-								biggest = reactions[i];
-								biggestindex = i;
-							}
-						}
-						var url = '/?id=' + auth.id + '&action=menu&menu=' + biggestindex + '&channel=' + channelID;
-						let options = getNetworkOptions(url);
-						getNetworkRequest(options, (response)=>{
-							let menuResponse = JSON.parse(response);
-							if (menuResponse.shift()){
-								handleConversation(menuResponse, channelID, () => {
-									requestNextStep(channelID);
-								});
-							}
-						}, channelID);
-					});
-				}, 20000);
-			})
+				});
+			});
 		});
 		callback([], channelID);
 	}
